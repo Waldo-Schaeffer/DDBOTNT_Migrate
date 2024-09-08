@@ -155,24 +155,21 @@ data_strings = {
 }'''
 
 # 创建 SQL 插入语句
-sql_statements = []
-for key, json_str in data_strings.items():
-    # 提取 uid
-    _, uid = key.split(':')
+insert_sql = "INSERT INTO `userinfo` (`uid`, `mid`, `name`, `room_id`, `room_url`) VALUES"
 
-    # 解析 JSON 数据
-    json_data = json.loads(json_str)
+values = []
+for key, value in data_strings.items():
+    # Parse JSON data
+    data = json.loads(value)
+    uid = key.split(":")[1]  # Extract UID from the key
+    mid = data["mid"]
+    name = data["name"].replace('"', '\\"')  # Escape quotes
+    room_id = data["room_id"]
+    room_url = data["room_url"].replace('"', '\\"')  # Escape quotes
+    values.append(f"({uid}, {mid}, \"{name}\", {room_id}, \"{room_url}\")")
 
-    # 使用 ensure_ascii=False 保证中文字符正确输出
-    json_config = json.dumps(json_data, ensure_ascii=False)
-
-    # 对整个JSON字符串进行转义，特别是单引号等SQL特殊字符
-    escaped_json_config = json_config.replace("'", "\\'")
-
-    # 构建 SQL 插入语句
-    sql = f"INSERT INTO userinfo (uid, data) VALUES ({uid}, '{escaped_json_config}');"
-    sql_statements.append(sql)
+# Join all values into a single SQL statement
+insert_sql += ",\n".join(values) + ";"
 
 # 打印所有的 SQL 插入命令
-for sql in sql_statements:
-    print(sql)
+print(insert_sql)
